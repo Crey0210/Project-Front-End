@@ -1,38 +1,38 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-// This line is commented out as we're not using hardhat console in this example
+// This line is commented out as we're not using console functionalities in this contract
 // import "hardhat/console.sol";
 
 contract Assessment {
-  // Stores the address of the contract owner (payable for potential future use)
+  // Stores the address of the contract owner (payable for potential future uses)
   address payable public owner;
   // Stores the current balance of the contract
   uint256 public balance;
 
-  // Event emitted when a deposit is made
+  // Event emitted when a deposit occurs
   event Deposit(uint256 amount);
-  // Event emitted when a withdrawal is made
+  // Event emitted when a withdrawal occurs
   event Withdraw(uint256 amount);
 
-  // Constructor function, called when the contract is deployed
-  // Sets the owner and initial balance
+  // Constructor function that initializes the contract with an initial balance
+  // and sets the owner as the message sender
   constructor(uint initBalance) payable {
     owner = payable(msg.sender);
     balance = initBalance;
   }
 
   // Function to retrieve the current balance of the contract (view function - doesn't modify state)
-  function getBalance() public view returns(uint256){
+  function getBalance() public view returns (uint256) {
     return balance;
   }
 
   // Function to deposit funds into the contract
   function deposit(uint256 _amount) public payable {
-    // Store the balance before the deposit
+    // Store the previous balance for checking
     uint _previousBalance = balance;
 
-    // Check if the sender is the owner (only the owner can deposit)
+    // Ensure only the owner can deposit
     require(msg.sender == owner, "You are not the owner of this account");
 
     // Add the deposited amount to the balance
@@ -45,27 +45,24 @@ contract Assessment {
     emit Deposit(_amount);
   }
 
-  // Custom error to indicate insufficient balance for withdrawal
+  // Custom error to handle insufficient balance during withdrawal
   error InsufficientBalance(uint256 balance, uint256 withdrawAmount);
 
   // Function to withdraw funds from the contract
   function withdraw(uint256 _withdrawAmount) public {
-    // Check if the sender is the owner (only the owner can withdraw)
+    // Ensure only the owner can withdraw
     require(msg.sender == owner, "You are not the owner of this account");
 
-    // Store the balance before the withdrawal
+    // Store the previous balance for checking
     uint _previousBalance = balance;
 
-    // Check if there are enough funds for the withdrawal
+    // Check if there's enough balance for withdrawal
     if (balance < _withdrawAmount) {
-      // Revert the transaction with a custom error message and details
-      revert InsufficientBalance({
-        balance: balance,
-        withdrawAmount: _withdrawAmount
-      });
+      // Revert the transaction with a custom error message
+      revert InsufficientBalance({ balance: balance, withdrawAmount: _withdrawAmount });
     }
 
-    // Subtract the withdrawn amount from the balance
+    // Withdraw the requested amount
     balance -= _withdrawAmount;
 
     // Assert to verify the balance is updated correctly (for debugging purposes)
