@@ -11,9 +11,9 @@ contract Assessment {
   uint256 public balance;
 
   // Event emitted when a deposit occurs
-  event Deposit(uint256 amount);
+  event Deposit(uint256 fund);
   // Event emitted when a withdrawal occurs
-  event Withdraw(uint256 amount);
+  event Withdraw(uint256 fund);
 
   // Constructor function that initializes the contract with an initial balance
   // and sets the owner as the message sender
@@ -28,7 +28,7 @@ contract Assessment {
   }
 
   // Function to deposit funds into the contract
-  function deposit(uint256 _amount) public payable {
+  function deposit(uint256 _fund) public payable {
     // Store the previous balance for checking
     uint _previousBalance = balance;
 
@@ -36,20 +36,20 @@ contract Assessment {
     require(msg.sender == owner, "You are not the owner of this account");
 
     // Add the deposited amount to the balance
-    balance += _amount;
+    balance += _fund;
 
     // Assert to verify the balance is updated correctly (for debugging purposes)
-    assert(balance == _previousBalance + _amount);
+    assert(balance == _previousBalance + _fund);
 
     // Emit a Deposit event with the deposited amount
-    emit Deposit(_amount);
+    emit Deposit(_fund);
   }
 
   // Custom error to handle insufficient balance during withdrawal
-  error InsufficientBalance(uint256 balance, uint256 withdrawAmount);
+  error InsufficientBalance(uint256 balance, uint256 withdrawFund);
 
   // Function to withdraw funds from the contract
-  function withdraw(uint256 _withdrawAmount) public {
+  function withdraw(uint256 _withdrawFund) public {
     // Ensure only the owner can withdraw
     require(msg.sender == owner, "You are not the owner of this account");
 
@@ -57,18 +57,18 @@ contract Assessment {
     uint _previousBalance = balance;
 
     // Check if there's enough balance for withdrawal
-    if (balance < _withdrawAmount) {
+    if (balance < _withdrawFund) {
       // Revert the transaction with a custom error message
-      revert InsufficientBalance({ balance: balance, withdrawAmount: _withdrawAmount });
+      revert InsufficientBalance({ balance: balance, withdrawFund: _withdrawFund });
     }
 
     // Withdraw the requested amount
-    balance -= _withdrawAmount;
+    balance -= _withdrawFund;
 
     // Assert to verify the balance is updated correctly (for debugging purposes)
-    assert(balance == (_previousBalance - _withdrawAmount));
+    assert(balance == (_previousBalance - _withdrawFund));
 
     // Emit a Withdraw event with the withdrawn amount
-    emit Withdraw(_withdrawAmount);
+    emit Withdraw(_withdrawFund);
   }
 }
