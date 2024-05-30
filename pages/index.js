@@ -57,12 +57,22 @@ export default function HomePage() {
   };
 
   // Function to fetch the user's balance from the ATM contract
-  const getBalance = async () => {
+  const getBalance = async (unit = "ether") => { // Optional unit argument for balance display
     if (atm) {
       try {
         const weiBalance = await atm.getBalance();
-        // Convert wei to a more user-friendly format (e.g., Ether)
-        const formattedBalance = ethers.utils.formatEther(weiBalance);
+        let formattedBalance;
+        switch (unit.toLowerCase()) {
+          case "ether":
+            formattedBalance = ethers.utils.formatEther(weiBalance);
+            break;
+          case "gwei":
+            formattedBalance = ethers.utils.formatUnits(weiBalance, "gwei");
+            break;
+          default:
+            console.warn(`Unsupported unit: ${unit}. Defaulting to Ether.`);
+            formattedBalance = ethers.utils.formatEther(weiBalance);
+        }
         setBalance(formattedBalance);
       } catch (error) {
         console.error("Error fetching balance:", error);
