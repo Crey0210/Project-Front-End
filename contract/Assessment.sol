@@ -1,55 +1,72 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-contract Assessment {
+contract Wallet {
+    address payable public owner;
+    uint256 public balance;
+    bool internal locked;
 
-  // Address of the contract owner (who can deposit and withdraw funds)
-  address payable public owner;
+    event FundsDeposited(uint256 amount);
+    event FundsWithdrawn(uint256 amount);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-  // Current balance of the contract
-  uint256 public balance;
+    // Modifier to check if the caller is the owner
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Access denied: Only the owner can perform this action");
+        _;
+    }
 
-  // Event emitted when a deposit occurs
-  event Deposit(uint256 fund);
+    // Modifier to prevent reentrancy attacks
+    modifier noReentrancy() {
+        require(!locked, "ReentrancyGuard: reentrant call");
+        locked = true;
+        _;
+        locked = false;
+    }
 
-  // Event emitted when a withdrawal occurs
-  event Withdraw(uint256 fund);
+    constructor(uint initBalance) payable {
+        owner = payable(msg.sender);
+        balance = initBalance;
+    }
 
-  // Constructor function - Sets the initial owner and balance upon deployment
-  constructor(uint initBalance) payable {
-    owner = payable(msg.sender);
-    balance = initBalance;
-  }
+    function getBalance() public view returns (uint256) {
+        return balance;
+    }
 
-  // Function to retrieve the current contract balance (view function - doesn't modify state)
-  function getBalance() public view returns (uint256) {
-    return balance;
-  }
+    function depositFunds(uint256 _amount) public payable onlyOwner {
+        uint _previousBalance = balance;
 
-  // Function to deposit funds into the contract
-  function deposit(uint fund) public payable {
-    // Ensure the message sender is the owner
-    require(msg.sender == owner, "Not owner");
+        // Update the balance
+        balance += _amount;
 
-    // Update balance with the amount sent in the transaction (using msg.value)
-    balance += fund;
+        // Emit the deposit event
+        emit FundsDeposited(_amount);
 
-    // Emit a Deposit event with the deposited fund
-    emit Deposit(msg.value);
-  }
+        // Confirm that the transaction was successful
+        assert(balance == _previousBalance + _amount);
+    }
 
-  // Function to withdraw funds from the contract
-  function withdraw(uint256 _withdrawFund) public {
-    // Ensure the message sender is the owner
-    require(msg.sender == owner, "Not owner");
+    // Function to withdraw funds from the contract
+    function withdraw(uint256 _withdrawFund) public onlyOwner noReentrancy {
+        // Check if there are enough funds to withdraw the requested amount
+        require(_withdrawFund <= balance, "Insufficient funds");
 
-    // Check if there are enough funds to withdraw the requested amount
-    require(_withdrawFund <= balance, "Insufficient funds");
+        // Update balance by subtracting the withdrawal amount
+        balance -= _withdrawFund;
 
-    // Update balance by subtracting the withdrawal amount
-    balance -= _withdrawFund;
+        // Emit a Withdraw event with the withdrawn amount
+        emit FundsWithdrawn(_withdrawFund);
+    }
 
-    // Emit a Withdraw event with the withdrawn amount
-    emit Withdraw(_withdrawFund);
-  }
+    function transferOwnership(address payable newOwner) public onlyOwner {
+        require(newOwner != address(0), "New owner cannot be the zero address");
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+
+    // Fallback function to allow the contract to receive Ether directly
+    receive() external payable {
+        balance += msg.value;
+        emit FundsDeposited(msg.value);
+    }
 }
